@@ -25,11 +25,10 @@ class TermsSearcher():
         for vocab in self.model.wv.index_to_key:
             self.word_dict[vocab] = self.model.wv[vocab]
 
-        user_input = input('검색어를 입력하세요: ')
+    def find_term(self, user_input):
         self.input_tokens = okt.nouns(user_input)
         self.tokenized_input = ' '.join(self.input_tokens)
 
-    def find_term(self):
         tokenized_titles = [' '.join(okt.nouns(title)) for title in self.titles]
         
         tfidf = TfidfVectorizer()
@@ -45,7 +44,11 @@ class TermsSearcher():
         rating = [str(key) for key, value in sorted(similarity.items(), key=lambda item: item[1], reverse=True)]
         top = rating[0]
 
-        self.find_detail(top)
+        if abs(round(similarity[top]*100, 2)) == 0:
+            result = None
+            self.show_result(result)
+        else:
+            self.find_detail(top)
 
     def find_detail(self, title):
         input_vectors = []
@@ -60,7 +63,7 @@ class TermsSearcher():
 
         detail_similarity = {}
         if user_vector == 0:
-            result = 0
+            result = title
         else:
             for key, value in self.terms_vectors[title].items():
                 try:
@@ -73,12 +76,15 @@ class TermsSearcher():
             detail_rating = [str(key) for key, value in sorted(detail_similarity.items(), key=lambda item: item[1], reverse=True)]
             detail_top = detail_rating[:3]
             result = (title, detail_top)
-
+        
         self.show_result(result)
     
-    def show_result(self, result):
-        if result == 0:
-            print('일치하는 검색 결과가 없습니다.')
+    def show_result(self, result): # streamlit
+        if result == None:
+            print("관련있는 상품 약관이 존재하지 않습니다.")
+        if type(result) == str:
+            print(result.strip(), '\n')
+            print('관련있는 조문이 존재하지 않습니다.')
         else:
             print(result[0].strip(), '\n')
             for detail in result[1]:
